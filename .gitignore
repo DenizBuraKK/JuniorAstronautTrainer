@@ -1,0 +1,77 @@
+# Visual Studio user-specific files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Visual Studio Code
+.vscode/
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+
+# Generated project files (regenerated from .uproject)
+*.sln
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+.vsconfig
+Makefile
+CMakeLists.txt
+.ue4dependencies
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+*.ipa
+
+# Unreal Engine generated folders
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/
+
+# Plugin generated folders
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+
+# Lightmass & map built data (optional - remove if sharing pre-built lighting)
+*_BuiltData.uasset
+
+# Raw source art assets (optional - remove if storing raw art in Git)
+SourceArt/**/*.png
+SourceArt/**/*.tga
+
+# OS generated files
+.DS_Store
+Thumbs.db
