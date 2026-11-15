@@ -3,6 +3,7 @@
 #include "MarsMainComputer.h"
 #include "MarsColonySimulation.h"
 #include "MarsHUDWidget.h"
+#include "MarsTransitionWidget.h"
 #include "MarsComputerWidget.h"
 
 #include "Components/InputComponent.h"
@@ -236,8 +237,10 @@ AMarsMainComputer::AMarsMainComputer()
 
 	DataFilePath = TEXT("Data/mars_week_2024-05-14_20_verified_EN.json");
 	InteractionKey = EKeys::E;
+	InfoKey = EKeys::I;
 	HUDWidgetClass = UMarsHUDWidget::StaticClass();
 	ComputerWidgetClass = UMarsComputerWidget::StaticClass();
+	CreditsText = FText::FromString(TEXT("NASA Space Apps Challenge\n\nTeam: (write your names in BP_MainComputer > Mars|UI > Credits Text)"));
 }
 
 UMarsColonySimulation* AMarsMainComputer::GetSimulation() const
@@ -271,6 +274,7 @@ void AMarsMainComputer::BeginPlay()
 	Simulation->OnGameOverNative.AddUObject(this, &AMarsMainComputer::HandleSimGameOver);
 
 	CreateHUD();
+	BindPlayerKeys();
 
 	if (bAutoStartGame && IsDataLoaded())
 	{
@@ -295,6 +299,11 @@ void AMarsMainComputer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		HUDWidget->RemoveFromParent();
 		HUDWidget = nullptr;
 	}
+	if (TransitionWidget)
+	{
+		TransitionWidget->RemoveFromParent();
+		TransitionWidget = nullptr;
+	}
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -310,6 +319,13 @@ void AMarsMainComputer::CreateHUD()
 	{
 		HUDWidget->Init(this);
 		HUDWidget->AddToViewport(0);
+	}
+	// Fades and end screen: above the HUD (0) and the Main Computer screen (10)
+	TransitionWidget = CreateWidget<UMarsTransitionWidget>(PC, UMarsTransitionWidget::StaticClass());
+	if (TransitionWidget)
+	{
+		TransitionWidget->Init(this);
+		TransitionWidget->AddToViewport(100);
 	}
 }
 
@@ -435,17 +451,8 @@ void AMarsMainComputer::HandleSphereBeginOverlap(UPrimitiveComponent* Overlapped
 		return;
 	}
 	bPlayerInRange = true;
-
-	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
-	{
-		EnableInput(PC);
-		if (!bInteractKeyBound && InputComponent)
-		{
-			InputComponent->BindKey(InteractionKey, IE_Pressed, this, &AMarsMainComputer::ToggleComputer);
-			bInteractKeyBound = true;
-		}
-	}
-	if (HUDWidget)
+	BindPlayerKeys();   // in case the player controller did not exist yet at BeginPlay
+	if (HUDWidget && !bInfoOpen && !bComputerOpen)
 	{
 		HUDWidget->SetInteractPromptVisible(true, InteractionKey);
 	}
@@ -460,13 +467,45 @@ void AMarsMainComputer::HandleSphereEndOverlap(UPrimitiveComponent* OverlappedCo
 	}
 	bPlayerInRange = false;
 	CloseComputer();
-	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
-	{
-		DisableInput(PC);
-	}
 	if (HUDWidget)
 	{
 		HUDWidget->SetInteractPromptVisible(false, InteractionKey);
+	}
+}
+
+void AMarsMainComputer::BindPlayerKeys()
+{
+	if (bInteractKeyBound)
+	{
+		return;
+	}
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (!PC)
+	{
+		return;
+	}
+	EnableInput(PC);   // keys stay active for the whole game; E only works near the computer
+	if (InputComponent)
+	{
+		InputComponent->BindKey(InteractionKey, IE_Pressed, this, &AMarsMainComputer::HandleInteractKey);
+		InputComponent->BindKey(InfoKey, IE_Pressed, this, &AMarsMainComputer::ToggleInfo);
+		bInteractKeyBound = true;
+	}
+}
+
+void AMarsMainComputer::HandleInteractKey()
+{
+	if (bInfoOpen)
+	{
+		return;
+	}
+	if (bComputerOpen)
+	{
+		CloseComputer();
+	}
+	else if (bPlayerInRange)
+	{
+		OpenComputer();
 	}
 }
 
@@ -488,6 +527,7 @@ void AMarsMainComputer::OpenComputer()
 	{
 		return;
 	}
+	CloseInfo();
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (!PC)
 	{
@@ -551,6 +591,72 @@ void AMarsMainComputer::CloseComputer()
 	}
 }
 
+// ==================================================================== "How to play" panel
+
+void AMarsMainComputer::ToggleInfo()
+{
+	if (bInfoOpen)
+	{
+		CloseInfo();
+	}
+	else
+	{
+		OpenInfo();
+	}
+}
+
+void AMarsMainComputer::OpenInfo()
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (bInfoOpen || !HUDWidget || !PC || (Simulation && Simulation->GetStateRef().bGameOver))
+	{
+		return;
+	}
+	CloseComputer();
+	bInfoOpen = true;
+
+	bInfoCursorWasVisible = PC->ShouldShowMouseCursor();
+	SetPlayerUIMode(true);
+	PC->SetIgnoreMoveInput(true);
+
+	bInfoPausedTimer = false;
+	if (bPauseDayWhileInfoOpen && IsDayTimerRunning())
+	{
+		PauseDayTimer();
+		bInfoPausedTimer = true;
+	}
+	HUDWidget->SetInteractPromptVisible(false, InteractionKey);
+	HUDWidget->SetInfoVisible(true);
+}
+
+void AMarsMainComputer::CloseInfo()
+{
+	if (!bInfoOpen)
+	{
+		return;
+	}
+	bInfoOpen = false;
+	if (HUDWidget)
+	{
+		HUDWidget->SetInfoVisible(false);
+	}
+	const bool bGameOver = Simulation && Simulation->GetStateRef().bGameOver;
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+	{
+		PC->SetIgnoreMoveInput(false);
+	}
+	SetPlayerUIMode(bGameOver || bInfoCursorWasVisible);
+	if (bInfoPausedTimer)
+	{
+		ResumeDayTimer();
+		bInfoPausedTimer = false;
+	}
+	if (HUDWidget)
+	{
+		HUDWidget->SetInteractPromptVisible(bPlayerInRange && !bGameOver, InteractionKey);
+	}
+}
+
 void AMarsMainComputer::SetPlayerUIMode(bool bUIMode)
 {
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
@@ -576,6 +682,7 @@ void AMarsMainComputer::SetPlayerUIMode(bool bUIMode)
 void AMarsMainComputer::HandleSimGameOver(bool bWon, const FText& Reason)
 {
 	CloseComputer();
+	CloseInfo();
 	SetPlayerUIMode(true);   // cursor for the Restart button
 }
 

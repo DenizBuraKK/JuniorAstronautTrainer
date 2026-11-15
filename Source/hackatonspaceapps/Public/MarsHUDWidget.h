@@ -1,6 +1,10 @@
 // MarsHUDWidget.h
-// Always-on HUD, built entirely in C++: day + clock, weather, 6 resource bars, flashing
-// red alerts, "press E" prompt, last message, data credits, and the end-of-game panel.
+// Always-on HUD, built entirely in C++:
+//   top-left  : mission clock (day, sol, date, time to next day, weather)
+//   top-right : base status (6 resource meters with per-day change)
+//   top-center: flashing red alert
+//   bottom    : "press E" prompt, last message, INFO button (bottom-right)
+//   overlays  : "How to play" panel (the end screen is in MarsTransitionWidget)
 
 #pragma once
 
@@ -15,6 +19,8 @@ class UButton;
 class UCanvasPanel;
 class UProgressBar;
 class UTextBlock;
+class UVerticalBox;
+class UWidgetTree;
 
 UCLASS()
 class UMarsHUDWidget : public UUserWidget
@@ -27,19 +33,24 @@ public:
 
 	void SetInteractPromptVisible(bool bVisible, const FKey& Key);
 
+	/** Shows / hides the "How to play" panel. Use AMarsMainComputer::OpenInfo / CloseInfo (they also pause the day). */
+	void SetInfoVisible(bool bVisible);
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeDestruct() override;
 
 private:
 	void BuildLayout();
+	UWidget* BuildInfoPanel();
+	void AddInfoSection(UVerticalBox* Box, const FString& Number, const FString& Title, const FString& Body);
 	void Refresh();
 	void HandleSimChanged();
 	void HandleGameOver(bool bWon, const FText& Reason);
 	void ToggleAlertFlash();
 
-	UFUNCTION()
-	void HandleRestartClicked();
+	UFUNCTION() void HandleInfoClicked();
+	UFUNCTION() void HandleInfoCloseClicked();
 
 	TWeakObjectPtr<AMarsMainComputer> Computer;
 	FDelegateHandle SimChangedHandle;
@@ -47,24 +58,31 @@ private:
 	FTimerHandle FlashTimer;
 	bool bFlashOn = true;
 
+	// Mission clock
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> DayText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> SolText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> DateText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> ClockText;
 	UPROPERTY(Transient) TObjectPtr<UProgressBar> DayBar;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> WeatherText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> TempText;
 
-	UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> MeterLabels;
+	// Base status
+	UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> MeterValues;
+	UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> MeterRates;
 	UPROPERTY(Transient) TArray<TObjectPtr<UProgressBar>> MeterBars;
 
+	// Alert
 	UPROPERTY(Transient) TObjectPtr<UBorder> AlertPanel;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> AlertText;
 
+	// Bottom
 	UPROPERTY(Transient) TObjectPtr<UBorder> PromptPanel;
-	UPROPERTY(Transient) TObjectPtr<UTextBlock> PromptText;
-
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> PromptKeyText;
+	UPROPERTY(Transient) TObjectPtr<UBorder> MessagePanel;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> MessageText;
+	UPROPERTY(Transient) TObjectPtr<UButton> InfoButton;
 
-	UPROPERTY(Transient) TObjectPtr<UBorder> EndPanel;
-	UPROPERTY(Transient) TObjectPtr<UTextBlock> EndTitle;
-	UPROPERTY(Transient) TObjectPtr<UTextBlock> EndReason;
-	UPROPERTY(Transient) TObjectPtr<UButton> RestartButton;
+	// Overlays
+	UPROPERTY(Transient) TObjectPtr<UWidget> InfoOverlay;
 };

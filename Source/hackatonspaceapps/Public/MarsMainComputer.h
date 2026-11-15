@@ -16,6 +16,7 @@ class USphereComponent;
 class UPrimitiveComponent;
 class UMarsColonySimulation;
 class UMarsHUDWidget;
+class UMarsTransitionWidget;
 class UMarsComputerWidget;
 
 // Internal storage (plain C++, filled once from the JSON).
@@ -101,6 +102,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Interaction")
 	FKey InteractionKey;
 
+	/** Opens / closes the "How to play" panel (the INFO button in the bottom-right does the same). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Interaction")
+	FKey InfoKey;
+
+	/** Stop the day clock while the "How to play" panel is open, so kids can read in peace. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Interaction")
+	bool bPauseDayWhileInfoOpen = true;
+
 	/** Stop the day clock while the computer screen is open. Off = time keeps running (more pressure). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Interaction")
 	bool bPauseDayWhileComputerOpen = false;
@@ -115,6 +124,36 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|UI")
 	TSubclassOf<UMarsComputerWidget> ComputerWidgetClass;
+
+	/** Shown on the black end screen under the result. Write your team / thanks here (Shift+Enter = new line). Empty = hidden. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|UI", meta = (MultiLine = true))
+	FText CreditsText;
+
+	// ================================================================ Transitions (visual only)
+
+	/** Fade to black at the end of each day, fade in with a big "DAY 2" title, black end screen. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Transitions")
+	bool bDayTransitions = true;
+
+	/** Seconds before the day ends when the screen starts going black. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Transitions", meta = (ClampMin = "0.0"))
+	float DayFadeOutSeconds = 3.f;
+
+	/** How long the screen stays fully black when the new day starts. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Transitions", meta = (ClampMin = "0.0"))
+	float DayBlackHoldSeconds = 0.6f;
+
+	/** How long the new day takes to fade back in. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Transitions", meta = (ClampMin = "0.05"))
+	float DayFadeInSeconds = 1.5f;
+
+	/** How long the big "DAY X" title stays on screen. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Transitions", meta = (ClampMin = "0.8"))
+	float DayTitleSeconds = 3.f;
+
+	/** How long the screen takes to go fully black when the game ends. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Transitions", meta = (ClampMin = "0.05"))
+	float EndFadeSeconds = 2.f;
 
 	// ================================================================ Data
 
@@ -205,6 +244,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Mars|Interaction") bool IsComputerOpen() const { return bComputerOpen; }
 	UFUNCTION(BlueprintPure, Category = "Mars|Interaction") bool IsPlayerInRange() const { return bPlayerInRange; }
 
+	// ================================================================ "How to play" panel
+
+	UFUNCTION(BlueprintCallable, Category = "Mars|Interaction") void OpenInfo();
+	UFUNCTION(BlueprintCallable, Category = "Mars|Interaction") void CloseInfo();
+	UFUNCTION(BlueprintCallable, Category = "Mars|Interaction") void ToggleInfo();
+	UFUNCTION(BlueprintPure, Category = "Mars|Interaction") bool IsInfoOpen() const { return bInfoOpen; }
+
 	/** Reloads the current level (used by the Restart button). */
 	UFUNCTION(BlueprintCallable, Category = "Mars")
 	void RestartLevel();
@@ -231,6 +277,8 @@ private:
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	void HandleSimGameOver(bool bWon, const FText& Reason);
+	void BindPlayerKeys();
+	void HandleInteractKey();
 
 	// Timer
 	FTimerHandle DayTimerHandle;
@@ -243,9 +291,13 @@ private:
 	bool bComputerOpen = false;
 	bool bInteractKeyBound = false;
 	bool bCursorWasVisible = false;
+	bool bInfoOpen = false;
+	bool bInfoPausedTimer = false;
+	bool bInfoCursorWasVisible = false;
 
 	UPROPERTY(Transient) TObjectPtr<UMarsHUDWidget> HUDWidget;
 	UPROPERTY(Transient) TObjectPtr<UMarsComputerWidget> ComputerWidget;
+	UPROPERTY(Transient) TObjectPtr<UMarsTransitionWidget> TransitionWidget;
 
 	// Data
 	TArray<FMarsComputerDay> StoredDays;        // sorted by DayNumber

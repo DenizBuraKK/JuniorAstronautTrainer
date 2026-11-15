@@ -10,10 +10,13 @@
 #include "MarsComputerWidget.generated.h"
 
 class AMarsMainComputer;
+class UBorder;
 class UButton;
+class UProgressBar;
 class USlider;
 class UTextBlock;
 class UVerticalBox;
+class UWidget;
 
 UCLASS()
 class UMarsComputerWidget : public UUserWidget
@@ -34,6 +37,7 @@ protected:
 
 private:
 	void BuildLayout();
+	UWidget* MakeSliderBlock(const FString& Title, const FString& Hint, const FLinearColor& Color, USlider*& OutSlider, UTextBlock*& OutValue);
 	void Refresh();
 	void RebuildEventSection();
 	void PushSlidersToSimulation();
@@ -52,7 +56,9 @@ private:
 	bool bBuiltWithPending = false;
 
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> HeaderText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> ClockText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> WeatherText;
+	UPROPERTY(Transient) TObjectPtr<UBorder> AlertPanel;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> AlertText;
 	UPROPERTY(Transient) TObjectPtr<UVerticalBox> EventBox;
 
@@ -60,11 +66,13 @@ private:
 	UPROPERTY(Transient) TObjectPtr<USlider> LifeSlider;
 	UPROPERTY(Transient) TObjectPtr<USlider> ShieldSlider;
 	UPROPERTY(Transient) TObjectPtr<USlider> ResearchSlider;
-	UPROPERTY(Transient) TObjectPtr<UTextBlock> LifeLabel;
-	UPROPERTY(Transient) TObjectPtr<UTextBlock> ShieldLabel;
-	UPROPERTY(Transient) TObjectPtr<UTextBlock> ResearchLabel;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> LifeValue;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> ShieldValue;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> ResearchValue;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TotalText;
-	UPROPERTY(Transient) TObjectPtr<UTextBlock> PreviewText;
+	UPROPERTY(Transient) TObjectPtr<UProgressBar> TotalBar;
+	UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> PreviewValues;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> StormText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> GoalText;
 	UPROPERTY(Transient) TObjectPtr<UButton> CloseButton;
 };
