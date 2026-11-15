@@ -5,9 +5,11 @@
 #include "MarsHUDWidget.h"
 #include "MarsTransitionWidget.h"
 #include "MarsStartWidget.h"
+#include "MarsStationConsole.h"
 #include "MarsComputerWidget.h"
 
 #include "Components/InputComponent.h"
+#include "CoreGlobals.h"
 #include "Components/SceneComponent.h"
 #include "Components/SphereComponent.h"
 #include "Dom/JsonObject.h"
@@ -567,26 +569,59 @@ void AMarsMainComputer::BindPlayerKeys()
 	EnableInput(PC);   // keys stay active for the whole game; E only works near the computer
 	if (InputComponent)
 	{
-		InputComponent->BindKey(InteractionKey, IE_Pressed, this, &AMarsMainComputer::HandleInteractKey);
-		InputComponent->BindKey(InfoKey, IE_Pressed, this, &AMarsMainComputer::ToggleInfo);
+		// bConsumeInput = false: the station consoles listen to the same E key.
+		InputComponent->BindKey(InteractionKey, IE_Pressed, this, &AMarsMainComputer::HandleInteractKey).bConsumeInput = false;
+		InputComponent->BindKey(InfoKey, IE_Pressed, this, &AMarsMainComputer::ToggleInfo).bConsumeInput = false;
 		bInteractKeyBound = true;
 	}
 }
 
 void AMarsMainComputer::HandleInteractKey()
 {
-	if (bInfoOpen)
+	if (bInfoOpen || ActiveConsole.IsValid())
 	{
 		return;
 	}
 	if (bComputerOpen)
 	{
-		CloseComputer();
+		if (TryClaimInteract())
+		{
+			CloseComputer();
+		}
 	}
-	else if (bPlayerInRange)
+	else if (bPlayerInRange && !bStartScreenOpen && TryClaimInteract())
 	{
 		OpenComputer();
 	}
+}
+
+UMarsHUDWidget* AMarsMainComputer::GetHUD() const
+{
+	return HUDWidget;
+}
+
+bool AMarsMainComputer::TryClaimInteract()
+{
+	if (LastInteractFrame == GFrameCounter)
+	{
+		return false;
+	}
+	LastInteractFrame = GFrameCounter;
+	return true;
+}
+
+void AMarsMainComputer::SetActiveConsole(AMarsStationConsole* Console)
+{
+	ActiveConsole = Console;
+}
+
+void AMarsMainComputer::CloseActiveConsole()
+{
+	if (AMarsStationConsole* Console = ActiveConsole.Get())
+	{
+		Console->CloseConsole();
+	}
+	ActiveConsole = nullptr;
 }
 
 void AMarsMainComputer::ToggleComputer()
@@ -693,6 +728,7 @@ void AMarsMainComputer::OpenInfo()
 		return;
 	}
 	CloseComputer();
+	CloseActiveConsole();
 	bInfoOpen = true;
 
 	bInfoCursorWasVisible = PC->ShouldShowMouseCursor();
@@ -761,6 +797,7 @@ void AMarsMainComputer::SetPlayerUIMode(bool bUIMode)
 
 void AMarsMainComputer::HandleSimGameOver(bool bWon, const FText& Reason)
 {
+	CloseActiveConsole();
 	CloseComputer();
 	CloseInfo();
 	SetPlayerUIMode(true);   // cursor for the Restart button

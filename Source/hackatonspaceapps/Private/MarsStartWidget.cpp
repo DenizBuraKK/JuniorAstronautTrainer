@@ -3,7 +3,10 @@
 #include "MarsStartWidget.h"
 #include "MarsColonySimulation.h"
 #include "MarsMainComputer.h"
+#include "MarsStationConsole.h"
 #include "MarsUIHelpers.h"
+
+#include "EngineUtils.h"
 
 void UMarsStartWidget::Init(AMarsMainComputer* InComputer)
 {
@@ -67,6 +70,29 @@ void UMarsStartWidget::BuildLayout()
 			TEXT("This game is a simple simulation of those challenges. Share your power wisely, answer the alerts at the Main Computer ")
 			TEXT("and bring your crew and your base safely to the end of the week."),
 			14, Muted(), true));
+		Card->SetContent(In);
+		AddV(Box, Card, FMargin(0.f, 0.f, 0.f, 14.f));
+	}
+
+	// Side tasks
+	{
+		int32 Seconds = 10, Reward = 5;
+		if (const UWorld* World = GetWorld())
+		{
+			for (TActorIterator<AMarsStationConsole> It(World); It; ++It)
+			{
+				Seconds = FMath::RoundToInt32(It->HoldSeconds);
+				Reward = FMath::RoundToInt32(It->RewardAmount);
+				break;
+			}
+		}
+		UBorder* Card = Panel(Tree, WithAlpha(Good(), 0.07f), FMargin(22.f, 14.f), 12.f, WithAlpha(Good(), 0.4f), 1.f);
+		UVerticalBox* In = Tree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		AddV(In, Caption(Tree, TEXT("SIDE TASKS  \u00B7  EXTRA POINTS"), Good(), 12), FMargin(0.f, 0.f, 0.f, 6.f));
+		AddV(In, Text(Tree, FString::Printf(
+			TEXT("You can collect more points by doing side tasks. Visit the Research Lab, the Power Reactor and the Life Support Bay, ")
+			TEXT("and hold the button for %d seconds to earn +%d research, battery or crew health."), Seconds, Reward),
+			14, White(), true));
 		Card->SetContent(In);
 		AddV(Box, Card, FMargin(0.f, 0.f, 0.f, 14.f));
 	}

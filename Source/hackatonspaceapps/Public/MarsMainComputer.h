@@ -18,6 +18,7 @@ class UMarsColonySimulation;
 class UMarsHUDWidget;
 class UMarsTransitionWidget;
 class UMarsStartWidget;
+class AMarsStationConsole;
 class UMarsComputerWidget;
 
 // Internal storage (plain C++, filled once from the JSON).
@@ -268,6 +269,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Mars|Start") void ExitGame();
 	UFUNCTION(BlueprintPure, Category = "Mars|Start") bool IsStartScreenOpen() const { return bStartScreenOpen; }
 
+	// ================================================================ Station consoles (side tasks)
+
+	/** The HUD (for prompts). */
+	UMarsHUDWidget* GetHUD() const;
+	/** Cursor + UI input on (true) or game input only (false). Used by all screens. */
+	void SetPlayerUIMode(bool bUIMode);
+	/** Only one screen may react to one press of E: returns false if something already used this press. */
+	bool TryClaimInteract();
+	/** The station console whose screen is open (null = none). */
+	void SetActiveConsole(AMarsStationConsole* Console);
+	AMarsStationConsole* GetActiveConsole() const { return ActiveConsole.Get(); }
+	void CloseActiveConsole();
+
 	/** Reloads the current level (used by the Restart button). */
 	UFUNCTION(BlueprintCallable, Category = "Mars")
 	void RestartLevel();
@@ -283,7 +297,7 @@ protected:
 private:
 	void HandleDayTimerElapsed();
 	void CreateHUD();
-	void SetPlayerUIMode(bool bUIMode);
+
 
 	UFUNCTION()
 	void HandleSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -311,6 +325,8 @@ private:
 	bool bCursorWasVisible = false;
 	bool bInfoOpen = false;
 	bool bStartScreenOpen = false;
+	uint64 LastInteractFrame = MAX_uint64;
+	TWeakObjectPtr<AMarsStationConsole> ActiveConsole;
 	bool bStartCursorWasVisible = false;
 	bool bInfoPausedTimer = false;
 	bool bInfoCursorWasVisible = false;

@@ -218,6 +218,63 @@ bool UMarsColonySimulation::ResolveEvent(int32 ChoiceIndex, FText& ResultText)
 	return true;
 }
 
+bool UMarsColonySimulation::IsSideTaskFull(EMarsSideTask Task) const
+{
+	if (!bRunning || State.bGameOver)
+	{
+		return true;
+	}
+	switch (Task)
+	{
+	case EMarsSideTask::Energy:      return State.Battery >= State.BatteryMax - KINDA_SMALL_NUMBER;
+	case EMarsSideTask::LifeSupport: return State.CrewHealth >= 100.f - KINDA_SMALL_NUMBER;
+	case EMarsSideTask::Research:
+	default:                         return false;   // research has no maximum
+	}
+}
+
+float UMarsColonySimulation::AddSideTaskBonus(EMarsSideTask Task, float Amount, FText& ResultText)
+{
+	ResultText = FText::GetEmpty();
+	if (!bRunning || State.bGameOver || Amount <= 0.f)
+	{
+		return 0.f;
+	}
+	float Added = 0.f;
+	FString What;
+	switch (Task)
+	{
+	case EMarsSideTask::Energy:
+		Added = FMath::Min(Amount, FMath::Max(0.f, State.BatteryMax - State.Battery));
+		State.Battery += Added;
+		What = TEXT("battery");
+		break;
+	case EMarsSideTask::LifeSupport:
+		Added = FMath::Min(Amount, FMath::Max(0.f, 100.f - State.CrewHealth));
+		State.CrewHealth += Added;
+		What = TEXT("crew health");
+		break;
+	case EMarsSideTask::Research:
+	default:
+		Added = Amount;
+		State.Research += Added;
+		What = TEXT("research");
+		break;
+	}
+
+	if (Added <= KINDA_SMALL_NUMBER)
+	{
+		ResultText = FText::FromString(FString::Printf(TEXT("Side task done, but the %s is already full. Nothing gained."), *What));
+		return 0.f;
+	}
+	ResultText = FText::FromString(FString::Printf(TEXT("Side task done: +%d %s."), FMath::RoundToInt32(Added), *What));
+	State.LastMessage = ResultText;
+	UpdateRates();
+	RebuildAlerts();
+	Broadcast();
+	return Added;
+}
+
 FText UMarsColonySimulation::DescribeChoiceEffects(int32 Day, int32 ChoiceIndex) const
 {
 	const AMarsMainComputer* Computer = GetComputer();

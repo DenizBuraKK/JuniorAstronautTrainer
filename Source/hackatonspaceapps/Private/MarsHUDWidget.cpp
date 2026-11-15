@@ -3,7 +3,10 @@
 #include "MarsHUDWidget.h"
 #include "MarsColonySimulation.h"
 #include "MarsMainComputer.h"
+#include "MarsStationConsole.h"
 #include "MarsUIHelpers.h"
+
+#include "EngineUtils.h"
 
 #include "Components/ScrollBox.h"
 #include "Engine/World.h"
@@ -15,6 +18,28 @@ namespace
 
 	// "\u00B7" = middle dot, "\u00B0" = degree sign (written as escapes so the source file stays plain ASCII)
 	const TCHAR* HudDot = TEXT("  \u00B7  ");
+}
+
+namespace HudSideTasks
+{
+
+	/** Settings of the first station console in the level (for the help texts). */
+	void GetSideTaskNumbers(const UObject* WorldContext, int32& OutSeconds, int32& OutReward, int32& OutUses)
+	{
+		OutSeconds = 10;
+		OutReward = 5;
+		OutUses = 2;
+		if (const UWorld* World = WorldContext ? WorldContext->GetWorld() : nullptr)
+		{
+			for (TActorIterator<AMarsStationConsole> It(World); It; ++It)
+			{
+				OutSeconds = FMath::RoundToInt32(It->HoldSeconds);
+				OutReward = FMath::RoundToInt32(It->RewardAmount);
+				OutUses = It->UsesPerDay;
+				break;
+			}
+		}
+	}
 }
 
 void UMarsHUDWidget::Init(AMarsMainComputer* InComputer)
@@ -182,7 +207,8 @@ void UMarsHUDWidget::BuildLayout()
 		PromptKeyText->SetShadowColorAndOpacity(FLinearColor::Transparent);
 		Key->SetContent(PromptKeyText);
 		AddH(Row, Key, 0.f, FMargin(0.f, 0.f, 12.f, 0.f));
-		AddH(Row, Text(Tree, TEXT("Use the Main Computer"), 15, White(), false, true), 0.f, FMargin(0.f));
+		PromptLabelText = Text(Tree, TEXT("Use the Main Computer"), 15, White(), false, true);
+		AddH(Row, PromptLabelText, 0.f, FMargin(0.f));
 		PromptPanel->SetContent(Row);
 		Place(Root, PromptPanel, FVector2D(0.5f, 1.f), FVector2D(0.5f, 1.f), FVector2D(0.f, -110.f));
 	}
@@ -397,14 +423,30 @@ UWidget* UMarsHUDWidget::BuildInfoPanel()
 	AddInfoSection(Content, TEXT("6"), TEXT("BOTTOM LEFT  -  MESSAGES"),
 		TEXT("Tells you what just happened, for example what your last decision did."));
 
+	{
+		int32 Seconds = 10, Reward = 5, Uses = 2;
+		HudSideTasks::GetSideTaskNumbers(this, Seconds, Reward, Uses);
+		AddInfoSection(Content, TEXT("+"), TEXT("SIDE TASKS  -  EXTRA POINTS"), FString::Printf(
+			TEXT("Besides the Main Computer, the base has three small station computers. Walk up to one and press [%s], ")
+			TEXT("then press and HOLD the button for %d seconds until the bar is full (letting go empties it).\n")
+			TEXT("\u2022 Research Lab: +%d research points\n")
+			TEXT("\u2022 Power Reactor: +%d battery\n")
+			TEXT("\u2022 Life Support Bay: +%d crew health\n")
+			TEXT("If the battery or crew health is already full, you gain nothing. %s ")
+			TEXT("Doing side tasks while you wait for the next day helps you collect more points!"),
+			*UseKey, Seconds, Reward, Reward, Reward,
+			Uses > 0 ? *FString::Printf(TEXT("Each station can be used %d times per day."), Uses) : TEXT("")));
+	}
+
 	AddInfoSection(Content, FString(), TEXT("COMMANDER TIPS"),
 		TEXT("\u2022 When a storm warning appears, move power to the shield BEFORE the storm hits.\n")
 		TEXT("\u2022 Calm days are for research and for charging the battery.\n")
 		TEXT("\u2022 Keep an eye on oxygen. Running out is the fastest way to lose.\n")
-		TEXT("\u2022 Don't put everything into research: one big storm can end the mission."));
+		TEXT("\u2022 Don't put everything into research: one big storm can end the mission.\n")
+		TEXT("\u2022 Waiting for the next day? Do the side tasks at the station computers."));
 
 	AddInfoSection(Content, FString(), TEXT("CONTROLS"), FString::Printf(
-		TEXT("Move: your normal movement controls%s%s: Main Computer%s%s: this guide%sMouse: buttons and sliders"),
+		TEXT("Move: your normal movement controls%s%s: Main Computer / station computers%s%s: this guide%sMouse: buttons, sliders, hold buttons"),
 		HudDot, *UseKey, HudDot, *HelpKey, HudDot));
 
 	AddInfoSection(Content, FString(), TEXT("WHERE THE DATA COMES FROM"),
@@ -417,11 +459,12 @@ UWidget* UMarsHUDWidget::BuildInfoPanel()
 
 // ==================================================================== Updates
 
-void UMarsHUDWidget::SetInteractPromptVisible(bool bVisible, const FKey& Key)
+void UMarsHUDWidget::SetInteractPromptVisible(bool bVisible, const FKey& Key, const FText& Label)
 {
 	if (PromptPanel)
 	{
 		PromptKeyText->SetText(Key.GetDisplayName());
+		PromptLabelText->SetText(Label.IsEmpty() ? FText::FromString(TEXT("Use the Main Computer")) : Label);
 		PromptPanel->SetVisibility(bVisible ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	}
 }

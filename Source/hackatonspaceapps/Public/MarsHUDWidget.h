@@ -31,7 +31,8 @@ public:
 	/** Call before AddToViewport. */
 	void Init(AMarsMainComputer* InComputer);
 
-	void SetInteractPromptVisible(bool bVisible, const FKey& Key);
+	/** Label empty = "Use the Main Computer". */
+	void SetInteractPromptVisible(bool bVisible, const FKey& Key, const FText& Label = FText::GetEmpty());
 
 	/** Shows / hides the "How to play" panel. Use AMarsMainComputer::OpenInfo / CloseInfo (they also pause the day). */
 	void SetInfoVisible(bool bVisible);
@@ -79,6 +80,7 @@ private:
 	// Bottom
 	UPROPERTY(Transient) TObjectPtr<UBorder> PromptPanel;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> PromptKeyText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> PromptLabelText;
 	UPROPERTY(Transient) TObjectPtr<UBorder> MessagePanel;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> MessageText;
 	UPROPERTY(Transient) TObjectPtr<UButton> InfoButton;

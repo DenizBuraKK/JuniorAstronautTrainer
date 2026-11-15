@@ -61,6 +61,15 @@ struct FMarsColonyState
 	UPROPERTY(BlueprintReadOnly, Category = "Mars") FText LastMessage;
 };
 
+/** Side tasks at the small station consoles (research lab, power reactor, life support). */
+UENUM(BlueprintType)
+enum class EMarsSideTask : uint8
+{
+	Research    UMETA(DisplayName = "Research (research points)"),
+	Energy      UMETA(DisplayName = "Energy (battery)"),
+	LifeSupport UMETA(DisplayName = "Life Support (crew health)")
+};
+
 DECLARE_MULTICAST_DELEGATE(FMarsSimChangedNative);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FMarsSimGameOverNative, bool /*bWon*/, const FText& /*Reason*/);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMarsSimChanged);
@@ -141,6 +150,18 @@ public:
 	FMarsColonyState GetState() const { return State; }
 
 	const FMarsColonyState& GetStateRef() const { return State; }
+
+	/**
+	 * Side-task reward from a station console. Energy = battery, Research = research points,
+	 * LifeSupport = crew health. Battery and health never go above their maximum: if they are
+	 * already full nothing is added. Returns the amount really added (0 = nothing).
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Mars")
+	float AddSideTaskBonus(EMarsSideTask Task, float Amount, FText& ResultText);
+
+	/** True if this side task would add nothing right now (battery / health already full, or game not running). */
+	UFUNCTION(BlueprintPure, Category = "Mars")
+	bool IsSideTaskFull(EMarsSideTask Task) const;
 
 	/** "Battery -10, Shield +15" for a choice of a day (empty if none). */
 	FText DescribeChoiceEffects(int32 Day, int32 ChoiceIndex) const;
