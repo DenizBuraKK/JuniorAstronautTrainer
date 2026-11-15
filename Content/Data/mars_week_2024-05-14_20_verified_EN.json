@@ -1,0 +1,347 @@
+{
+  "location": "Gale Crater, Mars (Curiosity rover)",
+  "week": "May 14-20, 2024 (sol 4184-4190)",
+  "weather_source": {
+    "institution": "NASA/JPL-Caltech/CAB, Curiosity REMS",
+    "official_link": "https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json",
+    "note": "Values were copied unchanged from this official feed. The official link couldn't be reached directly, so two separate GitHub copies of the feed were used; every value for this week matches in both copies. Open the official link in a browser to double-check before release."
+  },
+  "notes": [
+    "wind is null: Curiosity's wind sensors were damaged during landing, so the official feed has no wind data.",
+    "The -98 °C minimums on May 16 and 18 appear exactly like this in the official feed. They are much lower than other days, possibly because REMS measures at different times each day.",
+    "The shock arrival time on May 16 is a model forecast, not a measurement.",
+    "Sources give different classes for the May 20 flare: NASA says X12, some peer-reviewed papers say X12.8 or X16.5. The game uses NASA's value (X12).",
+    "8,100 µGy is the figure NASA published. Peer-reviewed papers also report different values for the RAD detector (~1.6-1.7 mGy) using other measurement methods.",
+    "The 'effects' numbers were chosen for game balance; they are not NASA data."
+  ],
+  "days": [
+    {
+      "day": 1,
+      "date": "2024-05-14",
+      "sol": 4184,
+      "weather": {
+        "condition": "Sunny",
+        "air_temp_min_c": -66,
+        "air_temp_max_c": -7,
+        "ground_temp_min_c": -71,
+        "ground_temp_max_c": 8,
+        "pressure_pa": 857,
+        "uv_index": "Moderate",
+        "sunrise": "05:47",
+        "sunset": "18:04",
+        "wind": null
+      },
+      "event": {
+        "title": "The Sun turns toward Mars: giant flares",
+        "description": "The same sunspot (AR 13664) fired three big flares in one day. The biggest was class X8.7 and it launched a CME (a cloud of gas). The sunspot is now facing Mars.",
+        "official_records": [
+          {
+            "info": "X1.7 flare, peak 2024-05-14T02:09Z, AR 13664",
+            "source_type": "DONKI (official)",
+            "link": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/FLR/30832/3"
+          },
+          {
+            "info": "X1.2 flare, peak 2024-05-14T12:55Z, AR 13664",
+            "source_type": "DONKI (official)",
+            "link": "https://webtools.ccmc.gsfc.nasa.gov/DONKI/view/FLR/30837/-1"
+          },
+          {
+            "info": "X8.7 flare, start 16:46Z, peak 16:51Z, end 17:02Z, AR 13664. Linked CME: 2024-05-14T17:00:00-CME-001",
+            "source_type": "DONKI (official)",
+            "link": "https://webtools.ccmc.gsfc.nasa.gov/DONKI/view/FLR/30849/-1"
+          },
+          {
+            "info": "Curiosity team: the sunspot now faces Mars. The X8.7 flare sent a CME toward Mars.",
+            "source_type": "NASA official (Curiosity mission blog)",
+            "link": "https://science.nasa.gov/blog/sols-4188-4190-aurora-watch-on-mars"
+          }
+        ],
+        "choices": [
+          {
+            "text": "Charge the shield now",
+            "effects": {
+              "energy": -10,
+              "shield": 15
+            }
+          },
+          {
+            "text": "Keep doing science",
+            "effects": {
+              "science": 10,
+              "shield": -5
+            }
+          }
+        ]
+      }
+    },
+    {
+      "day": 2,
+      "date": "2024-05-15",
+      "sol": 4185,
+      "weather": {
+        "condition": "Sunny",
+        "air_temp_min_c": -68,
+        "air_temp_max_c": -2,
+        "ground_temp_min_c": -87,
+        "ground_temp_max_c": 8,
+        "pressure_pa": 859,
+        "uv_index": "Moderate",
+        "sunrise": "05:48",
+        "sunset": "18:05",
+        "wind": null
+      },
+      "event": null
+    },
+    {
+      "day": 3,
+      "date": "2024-05-16",
+      "sol": 4186,
+      "weather": {
+        "condition": "Sunny",
+        "air_temp_min_c": -98,
+        "air_temp_max_c": 2,
+        "ground_temp_min_c": -82,
+        "ground_temp_max_c": 7,
+        "pressure_pa": 861,
+        "uv_index": "Moderate",
+        "sunrise": "05:49",
+        "sunset": "18:06",
+        "wind": null
+      },
+      "event": {
+        "title": "DONKI alert: a shock wave is coming",
+        "description": "NASA's space weather model predicts that the shock wave from a CME launched on May 13 at 1,456 km per second will reach Mars this evening. This is a forecast, not a certainty!",
+        "official_records": [
+          {
+            "info": "WSA-ENLIL+Cone model: CME 2024-05-13T09:12:00-CME-001 (1456 km/s). Estimated shock arrival at Mars: 2024-05-16T18:40Z.",
+            "source_type": "DONKI (official, model forecast)",
+            "link": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30823/1"
+          }
+        ],
+        "choices": [
+          {
+            "text": "Trust the forecast, bring everyone inside this evening",
+            "effects": {
+              "science": -5,
+              "energy": -5
+            }
+          },
+          {
+            "text": "The forecast isn't certain, keep working outside",
+            "effects": {
+              "science": 10,
+              "dose": 5
+            }
+          }
+        ]
+      }
+    },
+    {
+      "day": 4,
+      "date": "2024-05-17",
+      "sol": 4187,
+      "weather": {
+        "condition": "Sunny",
+        "air_temp_min_c": -69,
+        "air_temp_max_c": -7,
+        "ground_temp_min_c": -74,
+        "ground_temp_max_c": 8,
+        "pressure_pa": 861,
+        "uv_index": "Moderate",
+        "sunrise": "05:49",
+        "sunset": "18:07",
+        "wind": null
+      },
+      "event": {
+        "title": "CME hits Mars + aurora",
+        "description": "The cloud of gas from the Sun hit Mars. The night sky glowed with aurora. The Curiosity team planned a night observation to photograph it.",
+        "official_records": [
+          {
+            "info": "MAVEN observed the CME hitting Mars at ~13:40 UTC; the interaction lasted about 24 hours.",
+            "source_type": "Peer-reviewed paper (MAVEN data, ApJ)",
+            "link": "https://iopscience.iop.org/article/10.3847/1538-4357/ae3dad"
+          },
+          {
+            "info": "MAVEN saw aurora on the night side of Mars between May 14 and 20, 2024.",
+            "source_type": "NASA official",
+            "link": "https://www.nasa.gov/solar-system/planets/mars/nasa-watches-mars-light-up-during-epic-solar-storm"
+          },
+          {
+            "info": "Planning date May 17, 2024: the Curiosity team planned a night Mastcam observation for aurora.",
+            "source_type": "NASA official (Curiosity mission blog)",
+            "link": "https://science.nasa.gov/blog/sols-4188-4190-aurora-watch-on-mars"
+          }
+        ],
+        "choices": [
+          {
+            "text": "Stay at base, shield to full power",
+            "effects": {
+              "energy": -20,
+              "dose": 2
+            }
+          },
+          {
+            "text": "Go to the cliff shelter",
+            "effects": {
+              "oxygen": -10,
+              "dose": 1
+            }
+          },
+          {
+            "text": "Keep working outside",
+            "effects": {
+              "science": 20,
+              "dose": 12
+            }
+          }
+        ]
+      }
+    },
+    {
+      "day": 5,
+      "date": "2024-05-18",
+      "sol": 4188,
+      "weather": {
+        "condition": "Sunny",
+        "air_temp_min_c": -98,
+        "air_temp_max_c": -5,
+        "ground_temp_min_c": -78,
+        "ground_temp_max_c": 8,
+        "pressure_pa": 859,
+        "uv_index": "Moderate",
+        "sunrise": "05:50",
+        "sunset": "18:07",
+        "wind": null
+      },
+      "event": {
+        "title": "Communication blackout",
+        "description": "Earth is too low on Mars' horizon. No commands can arrive from Earth today. You have to decide on your own.",
+        "official_records": [
+          {
+            "info": "Curiosity couldn't receive commands for sol 4188 because Earth passes were too low on the horizon.",
+            "source_type": "NASA official (Curiosity mission blog)",
+            "link": "https://science.nasa.gov/?p=397293"
+          }
+        ],
+        "choices": [
+          {
+            "text": "Follow your own plan",
+            "effects": {
+              "energy": -5,
+              "science": 5
+            }
+          },
+          {
+            "text": "Wait to hear from Earth",
+            "effects": {
+              "science": -10
+            }
+          }
+        ]
+      }
+    },
+    {
+      "day": 6,
+      "date": "2024-05-19",
+      "sol": 4189,
+      "weather": {
+        "condition": "Sunny",
+        "air_temp_min_c": -68,
+        "air_temp_max_c": -5,
+        "ground_temp_min_c": -73,
+        "ground_temp_max_c": 8,
+        "pressure_pa": 861,
+        "uv_index": "Moderate",
+        "sunrise": "05:51",
+        "sunset": "18:08",
+        "wind": null
+      },
+      "event": {
+        "title": "Night observation or save energy?",
+        "description": "The team wants to measure the atmosphere and look for aurora in the dark. But there's no sunlight at night, so observations run on battery.",
+        "official_records": [
+          {
+            "info": "Sol 4189 plan: atmosphere measurements with APXS and SAM, a Mastcam aurora search after dark. Sol 4190 plan includes a dust devil survey.",
+            "source_type": "NASA official (Curiosity mission blog)",
+            "link": "https://science.nasa.gov/blog/sols-4188-4190-aurora-watch-on-mars"
+          }
+        ],
+        "choices": [
+          {
+            "text": "Do the night observation",
+            "effects": {
+              "energy": -10,
+              "science": 15
+            }
+          },
+          {
+            "text": "Save the battery for tomorrow",
+            "effects": {
+              "science": -5,
+              "energy": 5
+            }
+          }
+        ]
+      }
+    },
+    {
+      "day": 7,
+      "date": "2024-05-20",
+      "sol": 4190,
+      "weather": {
+        "condition": "Sunny",
+        "air_temp_min_c": -69,
+        "air_temp_max_c": -3,
+        "ground_temp_min_c": -78,
+        "ground_temp_max_c": 9,
+        "pressure_pa": 860,
+        "uv_index": "Moderate",
+        "sunrise": "05:51",
+        "sunset": "18:09",
+        "wind": null
+      },
+      "event": {
+        "title": "Giant radiation storm",
+        "description": "A giant flare erupted on the Sun. X-rays arrived first, and particles followed tens of minutes later. Curiosity measured the biggest radiation surge since it landed on Mars. Cameras showed specks like 'snow', and the orbiting Odyssey's star camera was blinded for a while.",
+        "official_records": [
+          {
+            "info": "The flare was estimated at X12. According to Curiosity's RAD, an astronaut would have received 8,100 micrograys (~30 chest X-rays): the biggest surge since landing in 2012.",
+            "source_type": "NASA official",
+            "link": "https://www.nasa.gov/solar-system/planets/mars/nasa-watches-mars-light-up-during-epic-solar-storm"
+          },
+          {
+            "info": "X-rays and gamma rays arrived first; charged particles followed within tens of minutes.",
+            "source_type": "NASA official",
+            "link": "https://www.nasa.gov/solar-system/planets/mars/nasa-watches-mars-light-up-during-epic-solar-storm"
+          },
+          {
+            "info": "Mars Odyssey's star camera was knocked out and recovered within an hour.",
+            "source_type": "NASA official",
+            "link": "https://www.nasa.gov/solar-system/planets/mars/nasa-watches-mars-light-up-during-epic-solar-storm"
+          },
+          {
+            "info": "Curiosity's Navcam recorded streaks and specks from particle hits on sol 4190. The detector was not damaged.",
+            "source_type": "NASA official (Photojournal PIA26302)",
+            "link": "https://photojournal.jpl.nasa.gov/catalog/PIA26302"
+          }
+        ],
+        "choices": [
+          {
+            "text": "Everyone inside, shield at full power",
+            "effects": {
+              "energy": -25,
+              "dose": 4
+            }
+          },
+          {
+            "text": "Keep the experiment running 20 more minutes",
+            "effects": {
+              "science": 25,
+              "dose": 20
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

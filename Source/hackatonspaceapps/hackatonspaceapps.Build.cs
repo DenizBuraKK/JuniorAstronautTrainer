@@ -8,7 +8,7 @@ public class hackatonspaceapps : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Json", "UMG", "Slate", "SlateCore", "InputCore" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
