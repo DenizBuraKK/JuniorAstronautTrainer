@@ -156,6 +156,11 @@ void UMarsColonySimulation::EndWeek()
 	{
 		return;
 	}
+	// Safety: the crew must be alive and safe at the very end too (a lost crew is never a win).
+	if (CheckFailure())
+	{
+		return;
+	}
 	if (State.Research >= State.ResearchGoal)
 	{
 		FinishGame(true, FText::FromString(FString::Printf(TEXT("All %d sols survived. Research %d / %d. Crew health %d%%, radiation dose %d / %d."),
@@ -216,6 +221,17 @@ bool UMarsColonySimulation::ResolveEvent(int32 ChoiceIndex, FText& ResultText)
 		Broadcast();
 	}
 	return true;
+}
+
+void UMarsColonySimulation::DebugFinish(bool bWon)
+{
+	if (!bRunning || State.bGameOver || State.Day <= 0)
+	{
+		return;
+	}
+	FinishGame(bWon, FText::FromString(bWon
+		? FString::Printf(TEXT("Test shortcut: mission marked as complete. Research %d / %d."), FMath::RoundToInt32(State.Research), FMath::RoundToInt32(State.ResearchGoal))
+		: FString(TEXT("Test shortcut: mission marked as failed."))));
 }
 
 bool UMarsColonySimulation::IsSideTaskFull(EMarsSideTask Task) const
@@ -328,7 +344,9 @@ void UMarsColonySimulation::StepSimulation()
 		return;
 	}
 	const double Now = World->GetTimeSeconds();
-	const float RealDelta = static_cast<float>(Now - LastStepTime);
+	// Clamp: a long frame hitch (loading, shader compile, debugger, window drag) must not
+	// apply minutes of base time in one jump.
+	const float RealDelta = FMath::Clamp(static_cast<float>(Now - LastStepTime), 0.f, MaxStepSeconds);
 	LastStepTime = Now;
 
 	State.DayTimeRemaining = Computer->GetDayTimeRemaining();
@@ -416,9 +434,24 @@ void UMarsColonySimulation::UpdateRates()
 	{
 		State.HealthRate -= (OxygenLowThreshold - State.Oxygen) / OxygenLowThreshold * OxygenLowDamagePerDay;
 	}
-	else if (State.CrewHealth < 100.f)
+	else
 	{
 		State.HealthRate += HealthRegenPerDay;
+	}
+
+	// Already full and would still go up: nothing changes (same as the battery). Without this the
+	// crew health rate flipped between -3 and +2 every step while sitting at 100%.
+	if (State.CrewHealth >= 100.f && State.HealthRate > 0.f)
+	{
+		State.HealthRate = 0.f;
+	}
+	if (State.Oxygen >= 100.f && State.OxygenRate > 0.f)
+	{
+		State.OxygenRate = 0.f;
+	}
+	if (State.Shield >= 100.f && State.ShieldRate > 0.f)
+	{
+		State.ShieldRate = 0.f;
 	}
 }
 

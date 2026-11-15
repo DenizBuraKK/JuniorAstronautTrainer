@@ -108,6 +108,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Interaction")
 	FKey InfoKey;
 
+	/** Test shortcuts: Ctrl + DebugWinKey = MISSION COMPLETE, Ctrl + DebugFailKey = MISSION FAILED. Turn off for the final build. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Debug")
+	bool bEnableDebugKeys = true;
+
+	/** Ctrl + this key ends the game as won. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Debug")
+	FKey DebugWinKey;
+
+	/** Ctrl + this key ends the game as failed. Default "[" = the \u011E key on a Turkish Q keyboard.
+	    If \u011E doesn't react, click this field and press the key you want. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Debug")
+	FKey DebugFailKey;
+
 	/** Stop the day clock while the "How to play" panel is open, so kids can read in peace. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Interaction")
 	bool bPauseDayWhileInfoOpen = true;
@@ -311,6 +324,8 @@ private:
 	void BindPlayerKeys();
 	void ShowStartScreen();
 	void HandleInteractKey();
+	void HandleDebugWin();
+	void HandleDebugFail();
 
 	// Timer
 	FTimerHandle DayTimerHandle;
@@ -326,6 +341,7 @@ private:
 	bool bInfoOpen = false;
 	bool bStartScreenOpen = false;
 	uint64 LastInteractFrame = MAX_uint64;
+	uint64 LastDayAdvanceFrame = MAX_uint64;
 	TWeakObjectPtr<AMarsStationConsole> ActiveConsole;
 	bool bStartCursorWasVisible = false;
 	bool bInfoPausedTimer = false;

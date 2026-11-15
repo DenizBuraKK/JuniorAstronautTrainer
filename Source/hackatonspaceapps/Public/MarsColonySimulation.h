@@ -87,6 +87,8 @@ public:
 
 	/** Real seconds between simulation steps. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Tuning") float SimStepSeconds = 0.2f;
+	/** Longest real time one step may cover (protects against frame hitches). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Tuning") float MaxStepSeconds = 1.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Tuning") float PowerPerDay = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|Tuning") float BatteryStart = 50.f;
@@ -158,6 +160,10 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Mars")
 	float AddSideTaskBonus(EMarsSideTask Task, float Amount, FText& ResultText);
+
+	/** Test shortcut (Ctrl+P / Ctrl+\u011E on the Main Computer): end the game now as won or failed. */
+	UFUNCTION(BlueprintCallable, Category = "Mars|Debug")
+	void DebugFinish(bool bWon);
 
 	/** True if this side task would add nothing right now (battery / health already full, or game not running). */
 	UFUNCTION(BlueprintPure, Category = "Mars")

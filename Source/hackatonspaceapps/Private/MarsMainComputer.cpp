@@ -242,6 +242,8 @@ AMarsMainComputer::AMarsMainComputer()
 	DataFilePath = TEXT("Data/mars_week_2024-05-14_20_verified_EN.json");
 	InteractionKey = EKeys::E;
 	InfoKey = EKeys::I;
+	DebugWinKey = EKeys::P;
+	DebugFailKey = EKeys::LeftBracket;   // \u011E on a Turkish Q keyboard
 	HUDWidgetClass = UMarsHUDWidget::StaticClass();
 	ComputerWidgetClass = UMarsComputerWidget::StaticClass();
 	CreditsText = FText::FromString(TEXT("NASA Space Apps Challenge\n\nTeam: (write your names in BP_MainComputer > Mars|UI > Credits Text)"));
@@ -447,6 +449,14 @@ bool AMarsMainComputer::StartDayTimer(float DayDurationSeconds)
 
 void AMarsMainComputer::HandleDayTimerElapsed()
 {
+	// After a long frame hitch the timer manager can fire a looping timer several times in one
+	// frame; never skip more than one day per frame.
+	if (LastDayAdvanceFrame == GFrameCounter)
+	{
+		return;
+	}
+	LastDayAdvanceFrame = GFrameCounter;
+
 	const int32 LastDay = StoredDays.Num() > 0 ? StoredDays.Last().DayNumber : 0;   // 7
 	if (CurrentDay >= LastDay)
 	{
@@ -572,6 +582,12 @@ void AMarsMainComputer::BindPlayerKeys()
 		// bConsumeInput = false: the station consoles listen to the same E key.
 		InputComponent->BindKey(InteractionKey, IE_Pressed, this, &AMarsMainComputer::HandleInteractKey).bConsumeInput = false;
 		InputComponent->BindKey(InfoKey, IE_Pressed, this, &AMarsMainComputer::ToggleInfo).bConsumeInput = false;
+		if (bEnableDebugKeys)
+		{
+			// FInputChord(Key, Shift, Ctrl, Alt, Cmd)
+			InputComponent->BindKey(FInputChord(DebugWinKey, false, true, false, false), IE_Pressed, this, &AMarsMainComputer::HandleDebugWin).bConsumeInput = false;
+			InputComponent->BindKey(FInputChord(DebugFailKey, false, true, false, false), IE_Pressed, this, &AMarsMainComputer::HandleDebugFail).bConsumeInput = false;
+		}
 		bInteractKeyBound = true;
 	}
 }
@@ -592,6 +608,22 @@ void AMarsMainComputer::HandleInteractKey()
 	else if (bPlayerInRange && !bStartScreenOpen && TryClaimInteract())
 	{
 		OpenComputer();
+	}
+}
+
+void AMarsMainComputer::HandleDebugWin()
+{
+	if (!bStartScreenOpen && Simulation)
+	{
+		Simulation->DebugFinish(true);
+	}
+}
+
+void AMarsMainComputer::HandleDebugFail()
+{
+	if (!bStartScreenOpen && Simulation)
+	{
+		Simulation->DebugFinish(false);
 	}
 }
 
