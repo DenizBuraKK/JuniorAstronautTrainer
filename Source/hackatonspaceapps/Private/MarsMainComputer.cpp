@@ -4,6 +4,7 @@
 #include "MarsColonySimulation.h"
 #include "MarsHUDWidget.h"
 #include "MarsTransitionWidget.h"
+#include "MarsStartWidget.h"
 #include "MarsComputerWidget.h"
 
 #include "Components/InputComponent.h"
@@ -14,6 +15,7 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
@@ -278,7 +280,17 @@ void AMarsMainComputer::BeginPlay()
 
 	if (bAutoStartGame && IsDataLoaded())
 	{
-		StartDayTimer(DefaultDayDurationSeconds);
+		// PLAY AGAIN reloads the level with "?MarsSkipIntro" unless the title screen should show again.
+		const UWorld* World = GetWorld();
+		const bool bSkipIntro = World && World->URL.HasOption(TEXT("MarsSkipIntro"));
+		if (bShowStartScreen && !bSkipIntro)
+		{
+			ShowStartScreen();   // the day clock starts when START is pressed
+		}
+		else
+		{
+			StartDayTimer(DefaultDayDurationSeconds);
+		}
 	}
 }
 
@@ -298,6 +310,11 @@ void AMarsMainComputer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		HUDWidget->RemoveFromParent();
 		HUDWidget = nullptr;
+	}
+	if (StartWidget)
+	{
+		StartWidget->RemoveFromParent();
+		StartWidget = nullptr;
 	}
 	if (TransitionWidget)
 	{
@@ -331,7 +348,70 @@ void AMarsMainComputer::CreateHUD()
 
 void AMarsMainComputer::RestartLevel()
 {
-	UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this, true)));
+	UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this, true)), true,
+		bShowStartScreenOnRestart ? FString() : FString(TEXT("MarsSkipIntro")));
+}
+
+// ==================================================================== Title screen
+
+void AMarsMainComputer::ShowStartScreen()
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (bStartScreenOpen)
+	{
+		return;
+	}
+	if (!PC)
+	{
+		StartDayTimer(DefaultDayDurationSeconds);   // no player controller: just start the game
+		return;
+	}
+	StartWidget = CreateWidget<UMarsStartWidget>(PC, UMarsStartWidget::StaticClass());
+	if (!StartWidget)
+	{
+		StartDayTimer(DefaultDayDurationSeconds);
+		return;
+	}
+	StartWidget->Init(this);
+	StartWidget->AddToViewport(200);   // above everything
+	bStartScreenOpen = true;
+
+	bStartCursorWasVisible = PC->ShouldShowMouseCursor();
+	SetPlayerUIMode(true);
+	PC->SetIgnoreMoveInput(true);
+	if (HUDWidget)
+	{
+		HUDWidget->SetInteractPromptVisible(false, InteractionKey);
+	}
+}
+
+void AMarsMainComputer::StartMission()
+{
+	if (!bStartScreenOpen)
+	{
+		return;
+	}
+	bStartScreenOpen = false;
+	if (StartWidget)
+	{
+		StartWidget->RemoveFromParent();
+		StartWidget = nullptr;
+	}
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+	{
+		PC->SetIgnoreMoveInput(false);
+	}
+	SetPlayerUIMode(bStartCursorWasVisible);
+	if (HUDWidget)
+	{
+		HUDWidget->SetInteractPromptVisible(bPlayerInRange, InteractionKey);
+	}
+	StartDayTimer(DefaultDayDurationSeconds);   // day 1 begins (fades in with the big "DAY 1" title)
+}
+
+void AMarsMainComputer::ExitGame()
+{
+	UKismetSystemLibrary::QuitGame(this, UGameplayStatics::GetPlayerController(this, 0), EQuitPreference::Quit, false);
 }
 
 // ==================================================================== Day timer
@@ -452,7 +532,7 @@ void AMarsMainComputer::HandleSphereBeginOverlap(UPrimitiveComponent* Overlapped
 	}
 	bPlayerInRange = true;
 	BindPlayerKeys();   // in case the player controller did not exist yet at BeginPlay
-	if (HUDWidget && !bInfoOpen && !bComputerOpen)
+	if (HUDWidget && !bInfoOpen && !bComputerOpen && !bStartScreenOpen)
 	{
 		HUDWidget->SetInteractPromptVisible(true, InteractionKey);
 	}
@@ -523,7 +603,7 @@ void AMarsMainComputer::ToggleComputer()
 
 void AMarsMainComputer::OpenComputer()
 {
-	if (bComputerOpen || !ComputerWidgetClass || (Simulation && Simulation->GetStateRef().bGameOver))
+	if (bComputerOpen || bStartScreenOpen || !ComputerWidgetClass || (Simulation && Simulation->GetStateRef().bGameOver))
 	{
 		return;
 	}
@@ -608,7 +688,7 @@ void AMarsMainComputer::ToggleInfo()
 void AMarsMainComputer::OpenInfo()
 {
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	if (bInfoOpen || !HUDWidget || !PC || (Simulation && Simulation->GetStateRef().bGameOver))
+	if (bInfoOpen || bStartScreenOpen || !HUDWidget || !PC || (Simulation && Simulation->GetStateRef().bGameOver))
 	{
 		return;
 	}

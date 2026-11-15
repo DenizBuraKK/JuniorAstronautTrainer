@@ -17,6 +17,7 @@ class UPrimitiveComponent;
 class UMarsColonySimulation;
 class UMarsHUDWidget;
 class UMarsTransitionWidget;
+class UMarsStartWidget;
 class UMarsComputerWidget;
 
 // Internal storage (plain C++, filled once from the JSON).
@@ -128,6 +129,14 @@ public:
 	/** Shown on the black end screen under the result. Write your team / thanks here (Shift+Enter = new line). Empty = hidden. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|UI", meta = (MultiLine = true))
 	FText CreditsText;
+
+	/** Show the "MARS MISSION SIMULATION" title screen (START / EXIT) before day 1 begins. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|UI")
+	bool bShowStartScreen = true;
+
+	/** Also show the title screen after PLAY AGAIN. Off = PLAY AGAIN jumps straight into day 1. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mars|UI")
+	bool bShowStartScreenOnRestart = false;
 
 	// ================================================================ Transitions (visual only)
 
@@ -251,6 +260,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Mars|Interaction") void ToggleInfo();
 	UFUNCTION(BlueprintPure, Category = "Mars|Interaction") bool IsInfoOpen() const { return bInfoOpen; }
 
+	// ================================================================ Title screen
+
+	/** START button: closes the title screen and starts the day clock. */
+	UFUNCTION(BlueprintCallable, Category = "Mars|Start") void StartMission();
+	/** EXIT button: quits the game (ends Play In Editor in the editor). */
+	UFUNCTION(BlueprintCallable, Category = "Mars|Start") void ExitGame();
+	UFUNCTION(BlueprintPure, Category = "Mars|Start") bool IsStartScreenOpen() const { return bStartScreenOpen; }
+
 	/** Reloads the current level (used by the Restart button). */
 	UFUNCTION(BlueprintCallable, Category = "Mars")
 	void RestartLevel();
@@ -278,6 +295,7 @@ private:
 
 	void HandleSimGameOver(bool bWon, const FText& Reason);
 	void BindPlayerKeys();
+	void ShowStartScreen();
 	void HandleInteractKey();
 
 	// Timer
@@ -292,12 +310,15 @@ private:
 	bool bInteractKeyBound = false;
 	bool bCursorWasVisible = false;
 	bool bInfoOpen = false;
+	bool bStartScreenOpen = false;
+	bool bStartCursorWasVisible = false;
 	bool bInfoPausedTimer = false;
 	bool bInfoCursorWasVisible = false;
 
 	UPROPERTY(Transient) TObjectPtr<UMarsHUDWidget> HUDWidget;
 	UPROPERTY(Transient) TObjectPtr<UMarsComputerWidget> ComputerWidget;
 	UPROPERTY(Transient) TObjectPtr<UMarsTransitionWidget> TransitionWidget;
+	UPROPERTY(Transient) TObjectPtr<UMarsStartWidget> StartWidget;
 
 	// Data
 	TArray<FMarsComputerDay> StoredDays;        // sorted by DayNumber

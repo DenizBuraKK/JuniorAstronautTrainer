@@ -214,7 +214,8 @@ void UMarsTransitionWidget::UpdateTransition()
 
 	if (!C->bDayTransitions || S.Day <= 0)
 	{
-		SetBlack(0.f);
+		// Behind the title screen stay black, so day 1 fades in from black after START.
+		SetBlack(C->bDayTransitions && C->IsStartScreenOpen() ? 1.f : 0.f);
 		return;
 	}
 
